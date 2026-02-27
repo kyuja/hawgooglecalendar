@@ -1,115 +1,217 @@
 import React, { useState } from 'react';
-import { Alert, Button, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
 const AddEvent: React.FC = () => {
-    const API_URL = "http://localhost:3000"; 
+    const API_URL = "http://localhost:3000";
+    const [activeTab, setActiveTab] = useState<'kurssuche' | 'eigener'>('kurssuche');
 
-    const [title, setTitle] = useState('');
-    const [module, setModule] = useState('');
-    const [description, setDescription] = useState('');
-    const [date, setDate] = useState('');
-    const [mainLecturer, setMainLecturer] = useState('');
-    const [subLecturer, setSubLecturer] = useState('');
+    // Kurssuche
+    const [semester, setSemester] = useState('');
+    const [fach, setFach] = useState('');
+
+    // Eigener Eintrag
+    const [name, setName] = useState('');
+    const [datum, setDatum] = useState('');
+    const [wichtig, setWichtig] = useState(false);
+    const [notiz, setNotiz] = useState('');
+    const [raum, setRaum] = useState('');
+    const [dozent, setDozent] = useState('');
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
-    const [location, setLocation] = useState('');
-    const [veranstaltungsart, setVeranstaltungsart] = useState('');
-
-
-
 
     const handleSave = async () => {
-        if (!title || !date || !module || !mainLecturer) {
-             Alert.alert("Fehler", "Titel, Datum, Modul, Hauptlehrender sind Pflichtfelder!");
-            return; 
-        } 
-        const entryPayload = {
-    title: `${module} – ${title}`,      // oder nur title
-    dozent: mainLecturer,
-    raum: location,
-    datum: `${date}T00:00:00.000Z`,     // ISO string -> Date castet Mongoose
-    zeitVon: startTime,
-    zeitBis: endTime,
-    notizen: description,
-    wichtig: false,
-    userId: "demo", // optional
-  };
-  try {
-    const res = await fetch(`${API_URL}/entries`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(entryPayload),
-    });
-
-    const text = await res.text(); // <- IMMER lesen, hilft mega beim Debug
-    console.log("POST /entries:", res.status, text);
-
-    if (!res.ok) {
-      Alert.alert("Fehler", text || "Speichern fehlgeschlagen");
-      return;
-    }
-
-    Alert.alert("Gespeichert", "Event gespeichert!");
-    setTitle("");
-    setModule("");
-    setDescription("");
-    setDate("");
-    setMainLecturer("");
-    setSubLecturer("");
-    setStartTime("");
-    setEndTime("");
-    setLocation("");
-    setVeranstaltungsart("");
-  } catch (e: any) {
-    console.log("NETWORK ERROR", e);
-    Alert.alert("Netzwerkfehler", e?.message ?? String(e));
-  }
-    }
+        if (activeTab === 'kurssuche') {
+            if (!semester || !fach) {
+                Alert.alert("Fehler", "Semester und Fach sind Pflichtfelder!");
+                return;
+            }
+            // deine Kurssuche-Logik
+        } else {
+            if (!name || !datum || !startTime || !endTime) {
+                Alert.alert("Fehler", "Name und Datum/Uhrzeit sind Pflichtfelder!");
+                return;
+            }
+            const payload = {
+                title: name,
+                datum: datum,
+                wichtig,
+                notizen: notiz,
+                raum: raum,
+                dozent: dozent,
+                zeitVon: startTime,
+                zeitBis: endTime,
+                userId: "demo",
+            };
+            try {
+                const res = await fetch(`${API_URL}/entries`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                const text = await res.text();
+                if (!res.ok) { Alert.alert("Fehler", text); return; }
+                Alert.alert("Gespeichert!", "Eintrag wurde erstellt.");
+                setName(''); setDatum(''); setWichtig(false); setNotiz(''); setRaum(''); setDozent(''); setStartTime(''); setEndTime('');
+            } catch (e: any) {
+                Alert.alert("Netzwerkfehler", e?.message ?? String(e));
+            }
+        }
+    };
 
     return (
-
         <SafeAreaView style={styles.safeArea}>
             <ScrollView style={styles.container}>
-                <Text style={styles.title}>Neuen Termin anlegen</Text>
-                <Text>Titel</Text>
-                <TextInput style={styles.input} value={title} onChangeText={setTitle} />
-                <Text>Beschreibung (optional)</Text>
-                <TextInput style={styles.input} value={description} onChangeText={setDescription} />
-                <Text>Modul</Text>
-                <TextInput style={styles.input} value={module} onChangeText={setModule} />
-                <Text>Hauptdozent</Text>
-                <TextInput style={styles.input} value={mainLecturer} onChangeText={setMainLecturer} />
-                <Text>Nebendozent (optional)</Text>
-                <TextInput style={styles.input} value={subLecturer} onChangeText={setSubLecturer} />
-                <Text>Datum (YYYY-MM-DD)</Text>
-                <TextInput style={styles.input} value={date} onChangeText={setDate} />
-                <Text>Startzeit (optional, HH:mm)</Text>
-                <TextInput style={styles.input} value={startTime} onChangeText={setStartTime} />
-                <Text>Endzeit (optional, HH:mm)</Text>
-                <TextInput style={styles.input} value={endTime} onChangeText={setEndTime} />
-                <Text>Ort/Raum (optional)</Text>
-                <TextInput style={styles.input} value={location} onChangeText={setLocation} />
-                <Text>Online, Hybrid oder in Person? (optional)</Text>
-                <TextInput style={styles.input} value={veranstaltungsart} onChangeText={setVeranstaltungsart} />
-                <Button title="Speichern" onPress={handleSave} />
+                <Image
+                    source={require("../../assets/images/HAW_Logo.jpg")}
+                    style={styles.hawLogo}
+                    resizeMode='contain'
+                />
+
+                <View style={styles.card}>
+                    {/* Tabs */}
+                    <View style={styles.tabRow}>
+                        <TouchableOpacity
+                            style={[styles.tab, activeTab === 'kurssuche' && styles.tabActive]}
+                            onPress={() => setActiveTab('kurssuche')}
+                        >
+                            <Text style={[styles.tabText, activeTab === 'kurssuche' && styles.tabTextActive]}>
+                                Kurssuche
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.tab, activeTab === 'eigener' && styles.tabActive]}
+                            onPress={() => setActiveTab('eigener')}
+                        >
+                            <Text style={[styles.tabText, activeTab === 'eigener' && styles.tabTextActive]}>
+                                Eigener Eintrag
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Kurssuche */}
+                    {activeTab === 'kurssuche' && (
+                        <View>
+                            <TextInput style={styles.input} placeholder="Semester" placeholderTextColor="#6A8FAD" value={semester} onChangeText={setSemester} />
+                            <TextInput style={styles.input} placeholder="Fach" placeholderTextColor="#6A8FAD" value={fach} onChangeText={setFach} />
+                        </View>
+                    )}
+
+                    {/* Eigener Eintrag */}
+                    {activeTab === 'eigener' && (
+                        <View>
+                            <TextInput style={styles.input} placeholder="Modulname" placeholderTextColor="#6A8FAD" value={name} onChangeText={setName} />
+                            <TextInput style={styles.input} placeholder="Datum" placeholderTextColor="#6A8FAD" value={datum} onChangeText={setDatum} />
+                                    <TextInput style={styles.input} placeholder="Startzeit (HH:mm)" placeholderTextColor="#6A8FAD" value={startTime} onChangeText={setStartTime} />
+        <TextInput style={styles.input} placeholder="Endzeit (HH:mm)" placeholderTextColor="#6A8FAD" value={endTime} onChangeText={setEndTime} />
+        <TextInput style={styles.input} placeholder="Raum (optional)" placeholderTextColor="#6A8FAD" value={raum} onChangeText={setRaum} />
+        <TextInput style={styles.input} placeholder="Dozent (optional)" placeholderTextColor="#6A8FAD" value={dozent} onChangeText={setDozent} />
+                            <View style={styles.switchRow}>
+                                <Text style={styles.switchLabel}>Wichtig</Text>
+                                <Switch
+                                    value={wichtig}
+                                    onValueChange={setWichtig}
+                                    trackColor={{ false: '#C5D7EA', true: '#002E99' }}
+                                    thumbColor="white"
+                                />
+                            </View>
+                            <TextInput
+                                style={styles.notizInput}
+                                placeholder="Notiz:"
+                                placeholderTextColor="#6A8FAD"
+                                multiline
+                                value={notiz}
+                                onChangeText={setNotiz}
+                            />
+                        </View>
+                    )}
+                </View>
+
+                <TouchableOpacity style={styles.button} onPress={handleSave}>
+                    <Text style={styles.buttonText}>
+                        {activeTab === 'kurssuche' ? 'Hinzufügen' : 'Erstellen'}
+                    </Text>
+                </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
-
-
     );
-
-
-
 };
 
-const styles = StyleSheet.create({
-    safeArea: { flex: 1, },
-    container: { padding: 20 },
-    title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
-    input: { borderWidth: 1, borderColor: '#ccc', marginBottom: 10, padding: 8 },
-});
-
-
 export default AddEvent;
+
+const styles = StyleSheet.create({
+    safeArea: { flex: 1 },
+    container: { padding: 20, backgroundColor: 'white' },
+    hawLogo: { width: 120, height: 50, alignSelf: 'flex-end' },
+    card: {
+        backgroundColor: '#9FBDDB',
+        borderRadius: 15,
+        padding: 16,
+        marginTop: 20,
+    },
+    tabRow: {
+        flexDirection: 'row',
+        marginBottom: 16,
+        gap: 8,
+    },
+    tab: {
+        flex: 1,
+        backgroundColor: '#C5D7EA',
+        borderRadius: 20,
+        padding: 10,
+        alignItems: 'center',
+    },
+    tabActive: {
+        backgroundColor: '#002E99',
+    },
+    tabText: {
+        color: '#002E99',
+        fontWeight: '500',
+    },
+    tabTextActive: {
+        color: 'white',
+    },
+    input: {
+        backgroundColor: '#C5D7EA',
+        borderRadius: 20,
+        padding: 10,
+        paddingHorizontal: 16,
+        color: '#002E99',
+        marginBottom: 10,
+    },
+    switchRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#C5D7EA',
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        marginBottom: 10,
+        justifyContent: 'space-between',
+    },
+    switchLabel: {
+        color: '#002E99',
+    },
+    notizInput: {
+        backgroundColor: '#C5D7EA',
+        borderRadius: 15,
+        padding: 12,
+        color: '#002E99',
+        minHeight: 100,
+        textAlignVertical: 'top',
+    },
+    button: {
+        backgroundColor: '#9FBDDB',
+        borderRadius: 20,
+        padding: 14,
+        alignItems: 'center',
+        marginTop: 24,
+        width: '60%',
+        alignSelf: 'center',
+    },
+    buttonText: {
+        color: '#002E99',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+});

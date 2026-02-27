@@ -51,7 +51,8 @@ const styles = StyleSheet.create({
     title: {
         color:"#002E99",
         fontSize: 18,
-        fontWeight: "600"
+        fontWeight: "600",
+        textAlign: "center"
     },
     subtitle: {
         color: "#002E99",
@@ -69,5 +70,6 @@ const styles = StyleSheet.create({
         backgroundColor: "#C5D7EA",
         padding: 10,
         borderRadius: 10,
+        gap: 8
     }
 })

@@ -9,7 +9,7 @@ const entrySchema = new mongoose.Schema({
   zeitBis: String,
   notizen: String,
   wichtig: { type: Boolean, default: false },
-  userId: String, // für später wenn Auth kommt
+  userId: String, 
 }, { timestamps: true });
 
 module.exports = mongoose.model('Entry', entrySchema);

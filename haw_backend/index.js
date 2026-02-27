@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config({ path: './config.env' });
 const Entry = require('./models/Entry');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('./models/User');
 
 const app = express();
 
@@ -16,7 +19,9 @@ mongoose.connect(process.env.ATLAS_URI)
 // Alle Einträge abrufen
 app.get('/entries', async (req, res) => {
   try {
-    const entries = await Entry.find().sort({ datum: 1 });
+    const userId = req.query.userId; // ← aus Query-Parameter
+    const filter = userId ? { userId } : {};
+    const entries = await Entry.find(filter).sort({ datum: 1 });
     res.json(entries);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -66,6 +71,58 @@ app.patch("/entries/:id/toggle-wichtig", async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// Registrieren
+app.post('/auth/register', async (req, res) => {
+    try {
+        const { vorname, nachname, matrikelnummer, email, passwort } = req.body;
+        const hash = await bcrypt.hash(passwort, 10);
+        const user = new User({ vorname, nachname, matrikelnummer, email, passwort: hash });
+        await user.save();
+        res.status(201).json({ message: 'Registriert!' });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Login
+app.post('/auth/login', async (req, res) => {
+    try {
+        const { email, passwort } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ error: 'User nicht gefunden' });
+        const ok = await bcrypt.compare(passwort, user.passwort);
+        if (!ok) return res.status(401).json({ error: 'Falsches Passwort' });
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        res.json({ token, user: { _id: user._id,vorname: user.vorname, email: user.email } });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/auth/me', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        const { userId } = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(userId).select('-passwort');
+        res.json(user);
+    } catch { res.status(401).json({ error: 'Nicht autorisiert' }); }
+});
+app.put('/auth/change-password', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        const { userId } = jwt.verify(token, process.env.JWT_SECRET);
+        const { altesPasswort, neuesPasswort } = req.body;
+        const user = await User.findById(userId);
+        const ok = await bcrypt.compare(altesPasswort, user.passwort);
+        if (!ok) return res.status(401).json({ error: 'Altes Passwort falsch' });
+        user.passwort = await bcrypt.hash(neuesPasswort, 10);
+        await user.save();
+        res.json({ message: 'Passwort geändert!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.get("/ping", (req, res) => res.send("pong"));

@@ -1,150 +1,125 @@
-import { CalendarEvent } from '@/haw_backend/types/event';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, FlatList, StyleSheet, Text, View } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-
-
-
-
-const customTheme = {
-    backgroundColor: '#ffffff',
-    calendarBackground: '#ffffff',
-    textSectionTitleColor: '#b6c1cd',
-    selectedDayBackgroundColor: '#00adf5',
-    selectedDayTextColor: '#ffffff',
-    todayTextColor: '#00adf5',
-    dayTextColor: '#2d4150',
-    textDisabledColor: '#d9e1e8',
-    dotColor: '#00adf5',
-    selectedDotColor: '#ffffff',
-    arrowColor: '#00adf5',
-    monthTextColor: '#00adf5',
-    textDayFontFamily: 'System',
-    textMonthFontFamily: 'System',
-    textDayHeaderFontFamily: 'System',
-    textDayFontSize: 16,
-    textMonthFontSize: 18,
-    textDayHeaderFontSize: 14
-};
-
-const CalendarScreen: React.FC = () => {
+const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
+const HOURS = Array.from({ length: 10 }, (_, i) => i + 8); // 8:00 - 17:00
 const API_URL = "http://localhost:3000";
-const [events, setEvents] = useState<CalendarEvent[]>([]);
-const [selectedDate, setSelectedDate] = useState<string>('');
 
-const loadEvents = async () => {
-  try {
-    const res = await fetch(`${API_URL}/entries`);
-    if (!res.ok) throw new Error("Fehler beim Laden");
-
-    const entries = await res.json();
-
-    const mapped: CalendarEvent[] = entries.map((e: any) => ({
-      id: e._id, // Mongo ID
-      title: e.title,
-      module: e.title, // falls du kein Modul-Feld im Entry hast
-      description: e.notizen ?? "",
-      date: new Date(e.datum).toISOString().slice(0, 10),
-      mainLecturer: e.dozent ?? "",
-      subLecturer: "",
-      startTime: e.zeitVon ?? "",
-      endTime: e.zeitBis ?? "",
-      location: e.raum ?? "",
-      veranstaltungsart: "",
-    }));
-
-    setEvents(mapped);
-  } catch (err) {
-    console.log(err);
-  }
+const getDayIndex = (dateStr: string) => {
+    const day = new Date(dateStr).getDay(); // 0=So, 1=Mo...
+    return day - 1; // Mo=0, Fr=4
 };
 
-useEffect(() => {
-  loadEvents();
-}, []);
+const Stundenplan = () => {
+    const [entries, setEntries] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const markedDates = useMemo(() => {
-        const marked: Record<string, object> = {};
-        events.forEach(ev => {
-            marked[ev.date] = { marked: true, dotColor: 'red' };
+    useEffect(() => {
+        fetch(`${API_URL}/entries`)
+            .then(r => r.json())
+            .then(data => { setEntries(data); setLoading(false); })
+            .catch(() => setLoading(false));
+    }, []);
+
+    const getEntriesForSlot = (dayIndex: number, hour: number) => {
+        return entries.filter(e => {
+            const d = getDayIndex(e.datum);
+            const startHour = parseInt(e.zeitVon?.split(':')[0] ?? '-1');
+            return d === dayIndex && startHour === hour;
         });
-        if (selectedDate) {
-            marked[selectedDate] = { ...(marked[selectedDate] || {}), selected: true };
-        }
-        return marked;
-    }, [events, selectedDate]);
-
-    const dateEvents = useMemo(
-        () => events.filter(ev => ev.date === selectedDate),
-        [selectedDate, events]
-    );
-
-    const generateICS = (eventList: CalendarEvent[]) => {
-        const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        const header = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:KalenderApp\n';
-        const footer = 'END:VCALENDAR\n';
-        const eventEntries = eventList.map(ev =>
-            `\nBEGIN:VEVENT` +
-            `\nUID:${ev.id}` +
-            `\nDTSTAMP:${dtstamp}` +
-            `\nSUMMARY:${ev.title}` +
-            `\nDESCRIPTION:${ev.description || ''}` +
-            `\nCATEGORIES:${ev.module}` +
-            (ev.location ? `\nLOCATION:${ev.location}` : '') +
-            (ev.mainLecturer ? `\nCOMMENT:Hauptlehrender: ${ev.mainLecturer}` : '') +
-            (ev.subLecturer ? `\nCOMMENT:Nebenlehrende: ${ev.subLecturer}` : '') +
-            (ev.veranstaltungsart ? `\nCOMMENT:Art: ${ev.veranstaltungsart}` : '') +
-            (ev.startTime
-                ? `\nDTSTART:${ev.date.replace(/-/g, '')}T${ev.startTime.replace(':', '')}00Z`
-                : `\nDTSTART;VALUE=DATE:${ev.date.replace(/-/g, '')}`) +
-            (ev.endTime ? `\nDTEND:${ev.date.replace(/-/g, '')}T${ev.endTime.replace(':', '')}00Z` : '') +
-            `\nEND:VEVENT\n`
-        ).join('');
-        return header + eventEntries + footer;
-    };
-
-    const exportICS = async () => {
-        if (events.length === 0) {
-            Alert.alert('Keine Events', 'Es gibt keine Termine zum Exportieren.');
-            return;
-        }
-        const ics = generateICS(events);
-        const fileName = 'termine.ics';
-        const fileUri = FileSystem.cacheDirectory + 'termine.ics';
-        await FileSystem.writeAsStringAsync(fileUri, ics, { encoding: FileSystem.EncodingType.UTF8 });
-        await Sharing.shareAsync(fileUri);
     };
 
     return (
-        <View style={styles.container}>
-            <Calendar markedDates={markedDates} onDayPress={d => setSelectedDate(d.dateString)} />
-            <Text style={styles.dateTitle}>Termine am {selectedDate}:</Text>
-            <FlatList
-                data={dateEvents}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                    <View style={styles.eventItem}>
-                        <Text style={styles.eventTitle}>{item.title}</Text>
-                        <Text>{item.description}</Text>
-                        {item.startTime && <Text>Start: {item.startTime}</Text>}
-                        {item.endTime && <Text>Ende: {item.endTime}</Text>}
-                    </View>
+        <SafeAreaView style={styles.safeArea}>
+            <ScrollView style={styles.container}>
+                <Image
+                    source={require("../../assets/images/HAW_Logo.jpg")}
+                    style={styles.hawLogo}
+                    resizeMode='contain'
+                />
+                <Text style={styles.title}>Stundenplan</Text>
+
+                {loading ? <ActivityIndicator color="#002E99" /> : (
+                    <ScrollView horizontal>
+                        <View style={styles.grid}>
+                            <View style={styles.row}>
+                                <View style={styles.timeCell} />
+                                {DAYS.map(d => (
+                                    <View key={d} style={styles.dayHeader}>
+                                        <Text style={styles.dayHeaderText}>{d}</Text>
+                                    </View>
+                                ))}
+                            </View>
+
+                            {/* Time Rows */}
+                            {HOURS.map(hour => (
+                                <View key={hour} style={styles.row}>
+                                    <View style={styles.timeCell}>
+                                        <Text style={styles.timeText}>{hour}:00</Text>
+                                    </View>
+                                    {DAYS.map((_, dayIndex) => {
+                                        const slots = getEntriesForSlot(dayIndex, hour);
+                                        return (
+                                            <View key={dayIndex} style={styles.cell}>
+                                                {slots.map((e, i) => (
+                                                    <View key={i} style={styles.eventCard}>
+                                                        <Text style={styles.eventTitle} numberOfLines={2}>{e.title}</Text>
+                                                        {e.raum ? <Text style={styles.eventSub}>{e.raum}</Text> : null}
+                                                        {e.zeitVon ? <Text style={styles.eventSub}>{e.zeitVon}{e.zeitBis ? ` - ${e.zeitBis}` : ''}</Text> : null}
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            ))}
+                        </View>
+                    </ScrollView>
                 )}
-            />
-            <Button title="Alle Events als ICS exportieren" onPress={exportICS} />
-        </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 };
 
+export default Stundenplan;
+
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16 },
-    eventItem: { marginVertical: 6, backgroundColor: '#f5f5f5', padding: 8, borderRadius: 4 },
-    eventTitle: { fontWeight: 'bold' },
-    dateTitle: { fontWeight: 'bold', marginTop: 12, marginBottom: 6 }
+    safeArea: { flex: 1, backgroundColor: 'white' },
+    container: { padding: 20 },
+    hawLogo: { width: 120, height: 50, alignSelf: 'flex-end' },
+    title: { fontSize: 20, fontWeight: '500', color: '#3a38ac', marginTop: 20, marginBottom: 16 },
+    grid: { flexDirection: 'column' },
+    row: { flexDirection: 'row' },
+    timeCell: {
+        width: 50,
+        height: 70,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    timeText: { color: '#6A8FAD', fontSize: 12 },
+    dayHeader: {
+        width: 90,
+        height: 36,
+        backgroundColor: '#9FBDDB',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 10,
+        marginHorizontal: 2,
+    },
+    dayHeaderText: { color: '#002E99', fontWeight: '600' },
+    cell: {
+        width: 90,
+        height: 70,
+        marginHorizontal: 2,
+        justifyContent: 'center',
+    },
+    eventCard: {
+        backgroundColor: '#9FBDDB',
+        borderRadius: 8,
+        padding: 4,
+        marginBottom: 2,
+    },
+    eventTitle: { color: '#002E99', fontSize: 11, fontWeight: '600' },
+    eventSub: { color: '#002E99', fontSize: 10, opacity: 0.8 },
 });
-
-export default CalendarScreen;
-
