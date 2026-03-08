@@ -1,3 +1,4 @@
+import { getUserId } from '@/utils/auth';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,23 +17,35 @@ const Stundenplan = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`${API_URL}/entries`)
-            .then(r => r.json())
-            .then(data => { setEntries(data); setLoading(false); })
-            .catch(() => setLoading(false));
+         const load = async () => {                              // 👈 async machen
+            const userId = await getUserId();                   // 👈
+            fetch(`${API_URL}/entries?userId=${userId}`)   
+                .then(r => r.json())
+                .then(data => { setEntries(data); setLoading(false); })
+                .catch(() => setLoading(false));
+         };
+         load();                                              // 👈 aufrufen
     }, []);
 
     const getEntriesForSlot = (dayIndex: number, hour: number) => {
         return entries.filter(e => {
             const d = getDayIndex(e.datum);
-            const startHour = parseInt(e.zeitVon?.split(':')[0] ?? '-1');
-            return d === dayIndex && startHour === hour;
+            const [h, m] = (e.zeitVon ?? '0:0').split(':').map(Number);
+            const startHour = h + m / 60;
+            return d === dayIndex && startHour >= hour && startHour < hour + 1;
         });
     };
 
+  const getEntryHeight = (zeitVon: string, zeitBis: string) => {
+    const [hStart, mStart] = zeitVon.split(':').map(Number);
+    const [hEnd, mEnd] = zeitBis.split(':').map(Number);
+    const durationHours = (hEnd + mEnd / 60) - (hStart + mStart / 60); // z.B. 2.0 Stunden
+    return durationHours * 70; // 70 = Höhe einer Stunden-Zeile in styles.cell
+};  
+
     return (
         <SafeAreaView style={styles.safeArea}>
-            <ScrollView style={styles.container}>
+            <ScrollView style={styles.container} stickyHeaderIndices={[2]}>
                 <Image
                     source={require("../../assets/images/HAW_Logo.jpg")}
                     style={styles.hawLogo}
@@ -43,18 +56,19 @@ const Stundenplan = () => {
                 {loading ? <ActivityIndicator color="#002E99" /> : (
                     <ScrollView horizontal>
                         <View style={styles.grid}>
-                            <View style={styles.row}>
-                                <View style={styles.timeCell} />
-                                {DAYS.map(d => (
-                                    <View key={d} style={styles.dayHeader}>
-                                        <Text style={styles.dayHeaderText}>{d}</Text>
-                                    </View>
-                                ))}
+                            <View style={styles.stickyHeader}>
+                            <View style={styles.timeCell} />
+                            {DAYS.map(d => (
+                                <View key={d} style={styles.dayHeader}>
+                                    <Text style={styles.dayHeaderText}>{d}</Text>
+                                </View>
+                            ))}
                             </View>
 
                             {/* Time Rows */}
-                            {HOURS.map(hour => (
-                                <View key={hour} style={styles.row}>
+                            <ScrollView>
+                                {HOURS.map(hour => (
+                                 <View key={hour} style={styles.row}>
                                     <View style={styles.timeCell}>
                                         <Text style={styles.timeText}>{hour}:00</Text>
                                     </View>
@@ -74,6 +88,7 @@ const Stundenplan = () => {
                                     })}
                                 </View>
                             ))}
+                            </ScrollView>
                         </View>
                     </ScrollView>
                 )}
@@ -97,6 +112,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    stickyHeader: {
+    flexDirection: 'row',
+    position: 'sticky' as any, // Web
+    top: 0,
+    backgroundColor: 'white',
+    zIndex: 10,
+},
     timeText: { color: '#6A8FAD', fontSize: 12 },
     dayHeader: {
         width: 90,

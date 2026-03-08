@@ -1,10 +1,41 @@
 import { BlueDataCard } from '@/components/BlueDataCard';
-import React from 'react';
-import { Image, StyleSheet, Text, TextInput, View } from 'react-native';
+import { getUserId } from '@/utils/auth';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text } from 'react-native';
+
+
+const API_URL = "http://localhost:3000";
+
 
 const Important = () => {
+      type Entry = {
+        _id: string;
+        title: string;
+        dozent?: string;
+        raum?: string;
+        datum: string;
+        zeitVon?: string;
+        zeitBis?: string;
+        notizen?: string;
+        wichtig: boolean;
+    };
+
+    const [entries, setEntries] = useState<Entry[]>([]);
+
+    useEffect(
+        useCallback(() => {
+            const load = async () => {
+                const userId = await getUserId(); // 👈
+                const res = await fetch(`${API_URL}/entries?userId=${userId}`);
+                const data = await res.json();
+                setEntries(data.filter((e: Entry) => e.wichtig)); // 👈 nur wichtige
+            };
+            load();
+        }, [])
+    );
+
     return (
-         <View style={styles.container}>
+         <ScrollView style={styles.container}>
                     <Image
                         source={require("../../assets/images/HAW_Logo.jpg")} 
                         style= {styles.hawLogo}
@@ -13,23 +44,25 @@ const Important = () => {
                     <Text style={styles.title}>Wichtige Termine</Text>
 
 
-                    <BlueDataCard title="26.02.2026: NWA Labor" subtitle={[
-        'Dozent: Prof Dr Nils Martini',
-        'Raum: A 1.23',
-        'Zeit: 08:00 - 11:30 Uhr',
-    ]} >
-                         <TextInput
-        multiline
-        placeholder="Notizen hier eingeben..."
-        placeholderTextColor="#6A8FAD"
-        style={{
-            color: "#002E99",
-            minHeight: 80,
-            textAlignVertical: 'top',  // Android: Text startet oben
-        }}
-    />
+                    {entries.length === 0 ? (
+                <Text style={{ marginTop: 16 }}>Keine wichtigen Termine 🎉</Text>
+            ) : (
+                entries.map((ev) => (
+                    <BlueDataCard
+                        key={ev._id}
+                        title={ev.title}
+                        subtitle={[
+                            `Dozent: ${ev.dozent ?? '-'}`,
+                            `Raum: ${ev.raum ?? '-'}`,
+                            `Zeit: ${ev.zeitVon ?? '??'} - ${ev.zeitBis ?? '??'} Uhr`,
+                        ]}
+                    >
+                        <Text style={{ color: '#002E99' }}>Notizen:</Text>
+                        <Text style={{ color: '#002E99' }}>{ev.notizen?.trim() ? ev.notizen : '-'}</Text>
                     </BlueDataCard>
-                </View>
+                ))
+            )}
+                </ScrollView>
 
     )
 }

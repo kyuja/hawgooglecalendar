@@ -1,10 +1,13 @@
+import { getUserId } from '@/utils/auth';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 const AddEvent: React.FC = () => {
     const API_URL = "http://localhost:3000";
     const [activeTab, setActiveTab] = useState<'kurssuche' | 'eigener'>('kurssuche');
+
 
     // Kurssuche
     const [semester, setSemester] = useState('');
@@ -21,6 +24,7 @@ const AddEvent: React.FC = () => {
     const [endTime, setEndTime] = useState('');
 
     const handleSave = async () => {
+        const userId = await getUserId(); // 👈
         if (activeTab === 'kurssuche') {
             if (!semester || !fach) {
                 Alert.alert("Fehler", "Semester und Fach sind Pflichtfelder!");
@@ -41,7 +45,7 @@ const AddEvent: React.FC = () => {
                 dozent: dozent,
                 zeitVon: startTime,
                 zeitBis: endTime,
-                userId: "demo",
+                userId: userId,
             };
             try {
                 const res = await fetch(`${API_URL}/entries`, {

@@ -1,13 +1,17 @@
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 const Login = () => {
     const API_URL = "http://localhost:3000";
     const [email, setEmail] = useState('');
     const [passwort, setPasswort] = useState('');
+     console.log('Button gedrückt!');
+    console.log('Sende an:', `${API_URL}/auth/login`); // 👈
+    console.log('Email:', email, 'Passwort:', passwort); // 👈
 
     const handleLogin = async () => {
         if (!email || !passwort) {
@@ -15,17 +19,32 @@ const Login = () => {
             return;
         }
         try {
+            console.log('Vor fetch...'); // 👈
             const res = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, passwort }),
             });
+             console.log('Nach fetch, Status:', res.status); // 👈
             const data = await res.json();
+            console.log('Status:', res.status);  // 👈
+            console.log('Data:', data);          // 👈
             if (!res.ok) { Alert.alert('Fehler', data.error); return; }
             // Token speichern
+            const saveToken = async (token: string, userId: string) => {
+            if (Platform.OS === 'web') {
+                localStorage.setItem('token', token);
+                localStorage.setItem('userId', userId);
+            } else {
+                await SecureStore.setItemAsync('token', token);
+                await SecureStore.setItemAsync('userId', userId);
+            }
+        };
             Alert.alert('Willkommen!', `Hallo ${data.user.vorname}!`);
-            await SecureStore.setItemAsync('token', data.token);
-            await SecureStore.setItemAsync('userId', data.user._id);
+            console.log('Login erfolgreich!');
+            await saveToken(data.token, data.user._id);
+            //await SecureStore.setItemAsync('token', data.token);
+            //await SecureStore.setItemAsync('userId', data.user._id);
 
             router.push('/home');
         } catch (e: any) {
@@ -63,7 +82,9 @@ const Login = () => {
                     />
         </View> 
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <TouchableOpacity style={styles.button} onPress={() => {
+            handleLogin();
+        }}>
             <Text style={styles.buttonText}>Einloggen</Text>
         </TouchableOpacity>
 

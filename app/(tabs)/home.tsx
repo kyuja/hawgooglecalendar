@@ -1,12 +1,13 @@
 import { BlueDataCard } from '@/components/BlueDataCard';
+import { getUserId } from '@/utils/auth';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-
 const Home = () => {
 
     const API_URL = "http://localhost:3000"; 
+    
     type Entry = {
   _id: string;
   title: string;
@@ -24,7 +25,8 @@ useFocusEffect(
   useCallback(() => {
     const load = async () => {
       try {
-        const res = await fetch(`${API_URL}/entries`);
+        const userId = await getUserId(); // 👈
+        const res = await fetch(`${API_URL}/entries?userId=${userId}`); // 👈
         if (!res.ok) throw new Error("Entries konnten nicht geladen werden");
         const data = await res.json();
         setEntries(data);
