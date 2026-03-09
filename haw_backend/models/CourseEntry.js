@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 
-const entrySchema = new mongoose.Schema({
+const courseEntrySchema = new mongoose.Schema({
   title: { type: String, required: true },
+  fachsemester: { type: Number, required: true },
+  studiengang: { type: String, required: true },
   dozent: String,
   raum: String,
   datum: { type: Date, required: true },
@@ -10,7 +12,6 @@ const entrySchema = new mongoose.Schema({
   notizen: String,
   wichtig: { type: Boolean, default: false },
   wiederholung: { type: String, enum: ['nie', 'wöchentlich', '2-wöchentlich'], default: 'nie' },
-  userId: String,
 }, { timestamps: true });
 
-module.exports = mongoose.model('Entry', entrySchema);
+module.exports = mongoose.model('CourseEntry', courseEntrySchema);

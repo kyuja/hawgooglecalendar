@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Image, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const API_URL = "http://localhost:3000";
+const API_URL = "http://10.0.2.2:3000";
 const RAUM_BUCHUNG_URL = "https://auth.anny.eu/start-session?entityId=https%3A%2F%2Flogin.haw-hamburg.de%2Frealms%2FHAW-Hamburg&returnTo=https%3A%2F%2Fanny.eu%2Fexplore%2Fhaw-hamburg-hibs"; // ← echte URL anpassen
 
 const Profile = () => {

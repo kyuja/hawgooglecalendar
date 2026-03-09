@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config({ path: './config.env' });
 const Entry = require('./models/Entry');
+const CourseEntry = require('./models/CourseEntry');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('./models/User');
@@ -53,6 +54,16 @@ app.delete('/entries/:id', async (req, res) => {
 // Eintrag bearbeiten
 app.put('/entries/:id', async (req, res) => {
   try {
+    const entry = await Entry.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+    res.json(entry);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Eintrag teilweise aktualisieren
+app.patch('/entries/:id', async (req, res) => {
+  try {
     const entry = await Entry.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(entry);
   } catch (err) {
@@ -95,7 +106,7 @@ app.post('/auth/login', async (req, res) => {
         const ok = await bcrypt.compare(passwort, user.passwort);
         if (!ok) return res.status(401).json({ error: 'Falsches Passwort' });
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        res.json({ token, user: { _id: user._id,vorname: user.vorname, email: user.email } });
+        res.json({ token, user: { _id: user._id, vorname: user.vorname, email: user.email, role: user.role } });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -123,6 +134,43 @@ app.put('/auth/change-password', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// --- Course Entries (Admin erstellt, User kann hinzufügen) ---
+
+// Alle Kurseinträge suchen (nach Fachsemester und Studiengang)
+app.get('/course-entries', async (req, res) => {
+  try {
+    const { fachsemester, studiengang } = req.query;
+    const filter = {};
+    if (fachsemester) filter.fachsemester = Number(fachsemester);
+    if (studiengang) filter.studiengang = { $regex: new RegExp(`^${studiengang}$`, 'i') };
+    const entries = await CourseEntry.find(filter).sort({ datum: 1 });
+    res.json(entries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Kurseintrag erstellen (nur Admin – Auth-Check kommt später)
+app.post('/course-entries', async (req, res) => {
+  try {
+    const entry = new CourseEntry(req.body);
+    await entry.save();
+    res.status(201).json(entry);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Kurseintrag löschen (Admin)
+app.delete('/course-entries/:id', async (req, res) => {
+  try {
+    await CourseEntry.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Gelöscht' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get("/ping", (req, res) => res.send("pong"));

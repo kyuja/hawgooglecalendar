@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 const Login = () => {
-    const API_URL = "http://localhost:3000";
+    const API_URL = "http://10.0.2.2:3000";
     const [email, setEmail] = useState('');
     const [passwort, setPasswort] = useState('');
      console.log('Button gedrückt!');
@@ -91,6 +91,10 @@ const Login = () => {
         <TouchableOpacity onPress={() => router.push('/register')}>
                     <Text style={styles.registerLink}>Noch kein Account? Registrieren</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push('/adminLogin')}>
+                    <Text style={styles.adminLink}>Admin Login</Text>
+        </TouchableOpacity>
     </View>
     </SafeAreaView>
     );
@@ -104,6 +108,13 @@ const styles = StyleSheet.create({
         color: '#6A8FAD',
         textAlign: 'center',
         marginTop: 16,
+    },
+    adminLink: {
+        color: '#002E99',
+        textAlign: 'center',
+        marginTop: 24,
+        fontSize: 13,
+        opacity: 0.6,
     },
     container: {
         padding: 20,

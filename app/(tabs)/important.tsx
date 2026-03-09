@@ -1,10 +1,11 @@
 import { BlueDataCard } from '@/components/BlueDataCard';
 import { getUserId } from '@/utils/auth';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
-const API_URL = "http://localhost:3000";
+const API_URL = "http://10.0.2.2:3000";
 
 
 const Important = () => {
@@ -18,17 +19,37 @@ const Important = () => {
         zeitBis?: string;
         notizen?: string;
         wichtig: boolean;
+        wiederholung?: 'nie' | 'wöchentlich' | '2-wöchentlich';
     };
 
     const [entries, setEntries] = useState<Entry[]>([]);
 
-    useEffect(
+    const unmarkWichtig = (id: string, title: string) => {
+        Alert.alert('Achtung!', `"${title}" wirklich aus wichtigen Terminen entfernen?`, [
+            { text: 'Abbrechen', style: 'cancel' },
+            {
+                text: 'Entfernen', style: 'destructive', onPress: () => {
+                    fetch(`${API_URL}/entries/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ wichtig: false }),
+                    })
+                        .then(() => setEntries(prev => prev.filter(e => e._id !== id)))
+                        .catch(console.error);
+                }
+            },
+        ]);
+    };
+
+    useFocusEffect(
         useCallback(() => {
             const load = async () => {
-                const userId = await getUserId(); // 👈
+                const userId = await getUserId();
                 const res = await fetch(`${API_URL}/entries?userId=${userId}`);
                 const data = await res.json();
-                setEntries(data.filter((e: Entry) => e.wichtig)); // 👈 nur wichtige
+                const todayStart = new Date();
+                todayStart.setHours(0, 0, 0, 0);
+                setEntries(data.filter((e: Entry) => e.wichtig && new Date(e.datum) >= todayStart));
             };
             load();
         }, [])
@@ -36,6 +57,7 @@ const Important = () => {
 
     return (
          <ScrollView style={styles.container}>
+            <View style={{ paddingTop: 65 }}>
                     <Image
                         source={require("../../assets/images/HAW_Logo.jpg")} 
                         style= {styles.hawLogo}
@@ -55,13 +77,18 @@ const Important = () => {
                             `Dozent: ${ev.dozent ?? '-'}`,
                             `Raum: ${ev.raum ?? '-'}`,
                             `Zeit: ${ev.zeitVon ?? '??'} - ${ev.zeitBis ?? '??'} Uhr`,
+                            ...(ev.wiederholung && ev.wiederholung !== 'nie' ? [`${ev.wiederholung}`] : []),
                         ]}
                     >
                         <Text style={{ color: '#002E99' }}>Notizen:</Text>
                         <Text style={{ color: '#002E99' }}>{ev.notizen?.trim() ? ev.notizen : '-'}</Text>
+                        <TouchableOpacity style={styles.unmarkBtn} onPress={() => unmarkWichtig(ev._id, ev.title)}>
+                            <Text style={styles.unmarkBtnText}>Aus "Wichtige Termine" entfernen</Text>
+                        </TouchableOpacity>
                     </BlueDataCard>
                 ))
             )}
+            </View>
                 </ScrollView>
 
     )
@@ -86,5 +113,17 @@ const styles = StyleSheet.create({
         marginTop: 20,
         textAlign: 'left',
         color: '#3a38ac'
-    }
+    },
+    unmarkBtn: {
+        backgroundColor: '#002E99',
+        borderRadius: 20,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        alignSelf: 'flex-start',
+    },
+    unmarkBtnText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: '600',
+    },
 })
