@@ -40,3 +40,4 @@ server/config.env
 *.tsbuildinfo
 
 app-example
+android/gradlew.bat
