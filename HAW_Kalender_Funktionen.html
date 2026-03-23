@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HAW Kalender – Funktionsübersicht</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f4f6fb;
+      color: #1a1a2e;
+      line-height: 1.6;
+      font-size: 13px;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      background: white;
+      padding: 48px 56px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #002E99;
+      padding-bottom: 20px;
+      margin-bottom: 36px;
+    }
+    .header-left h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #002E99;
+      letter-spacing: -0.5px;
+    }
+    .header-left p {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+    .badge {
+      background: #002E99;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 36px;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #002E99;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .section-title .icon {
+      width: 24px;
+      height: 24px;
+      background: #002E99;
+      color: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .feature-card {
+      background: #f8faff;
+      border: 1px solid #dde6f7;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .feature-card h3 {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #002E99;
+      margin-bottom: 5px;
+    }
+    .feature-card p {
+      font-size: 11.5px;
+      color: #4b5563;
+    }
+
+    /* Role Cards */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .role-card {
+      border-radius: 10px;
+      padding: 16px;
+      border: 2px solid transparent;
+    }
+    .role-card.student { background: #eff6ff; border-color: #9FBDDB; }
+    .role-card.admin   { background: #fff8f0; border-color: #f59e0b; }
+    .role-card.guest   { background: #f0fdf4; border-color: #86efac; }
+
+    .role-card .role-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .role-card.student .role-title { color: #1d4ed8; }
+    .role-card.admin   .role-title { color: #b45309; }
+    .role-card.guest   .role-title { color: #15803d; }
+
+    .role-card ul {
+      list-style: none;
+      padding: 0;
+    }
+    .role-card ul li {
+      font-size: 11.5px;
+      color: #374151;
+      padding: 2px 0;
+    }
+    .role-card ul li::before {
+      content: "✓ ";
+      font-weight: 700;
+      opacity: 0.6;
+    }
+
+    /* Tab Grid */
+    .tab-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .tab-card {
+      background: #f8faff;
+      border: 1px solid #dde6f7;
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .tab-card .tab-icon {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+    .tab-card h3 {
+      font-size: 11px;
+      font-weight: 700;
+      color: #002E99;
+      margin-bottom: 6px;
+    }
+    .tab-card p {
+      font-size: 10.5px;
+      color: #6b7280;
+    }
+
+    /* Color Legend */
+    .color-legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .color-dot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #374151;
+    }
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    /* Tech Stack */
+    .tech-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: #1d4ed8;
+      font-weight: 500;
+    }
+    .chip.backend { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+    .chip.db      { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+
+    /* API Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+    }
+    th {
+      background: #002E99;
+      color: white;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      color: #374151;
+    }
+    tr:nth-child(even) td { background: #f9fafb; }
+    .method {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    .get    { background: #d1fae5; color: #065f46; }
+    .post   { background: #dbeafe; color: #1e40af; }
+    .put    { background: #fef9c3; color: #92400e; }
+    .patch  { background: #ede9fe; color: #5b21b6; }
+    .delete { background: #fee2e2; color: #991b1b; }
+
+    /* Footer */
+    .footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: #9ca3af;
+    }
+
+    /* Print */
+    @media print {
+      body { background: white; }
+      .page { padding: 24px 32px; max-width: 100%; }
+      .feature-grid { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>HAW Kalender</h1>
+      <p>Funktionsübersicht &amp; Dokumentation · Hochschule für Angewandte Wissenschaften Hamburg</p>
+      <p> GitHub Repository:</p><a href="https://github.com/marcushsv/hawgooglecalendar.git" style="font-size:11px;color:#002E99;text-decoration:none;margin-top:4px;display:inline-block;">github.com/marcushsv/hawgooglecalendar</a>
+      </p>
+      <div style="font-size:11px;color:#6b7280;margin-top:8px;line-height:1.8;">
+        <strong style="color:#002E99;display:block;margin-bottom:2px;">Team</strong>
+        Alexander Breitner: 2626275 · Laura Siekierski: 2618388 · Marcus Möller: 2646763 · Sophia Bosnak: 2628240 
+      </div>
+    </div>
+    <div class="badge">v1.0</div>
+  </div>
+
+  <!-- Übersicht -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon">📱</div>
+      App-Beschreibung:
+    </div>
+    <p style="font-size:12.5px; color:#374151; background:#f8faff; padding:14px 16px; border-radius:10px; border-left:4px solid #002E99;">
+      Die <strong>HAW Kalender App</strong> ist eine mobile Anwendung konzipiert für Studierende der HAW Hamburg.
+      Sie ermöglicht das Verwalten von Stundenplänen, das Erstellen eigener Kalendereinträge,
+      das Empfangen von Ankündigungen und den Zugriff auf andere Tools wie Outlook oder Anny: alles in einer App.
+      Die App läuft auf <strong>iOS &amp; Android</strong> (React Native / Expo) und hat ein
+      eigenes Backend mit der <strong>MongoDB-Datenbank</strong>.
+    </p>
+  </div>
+
+  <!-- Benutzerrollen -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon">👥</div>
+      Benutzerrollen
+    </div>
+    <div class="role-grid">
+      <div class="role-card student">
+        <div class="role-title">🎓 Student</div>
+        <ul>
+          <li>Eigenen Kalender verwalten</li>
+          <li>Kurse aus dem Kursplan hinzufügen</li>
+          <li>Einträge erstellen &amp; bearbeiten</li>
+          <li>In nativen Kalender exportieren</li>
+          <li>Passwort ändern</li>
+          <li>Push-Benachrichtigungen</li>
+          <li>Einträge als wichtig markieren</li>
+          <li>Per Link  auf Mensapläne, Raumbuchung und Emails zugreifen</li>
+        </ul>
+      </div>
+      <div class="role-card admin">
+        <div class="role-title">🔧 Admin</div>
+        <ul>
+          <li>Kurs-Management (CRUD)</li>
+          <li>CSV-Massenimport</li>
+          <li>Benutzerverwaltung</li>
+          <li>Ankündigungen versenden</li>
+          <li>Passwörter zurücksetzen</li>
+          <li>Benutzer löschen/bearbeiten</li>
+        </ul>
+      </div>
+      <div class="role-card guest">
+        <div class="role-title">👤 Gast</div>
+        <ul>
+          <li>Stundenpläne öffentlich einsehen</li>
+          <li>Nach Semester filtern</li>
+          <li>Nach Studiengang filtern</li>
+          <li>Kein Account nötig</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hauptfunktionen -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon">⭐</div>
+      Hauptfunktionen für Studierende
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>📅 Wochenkalender-Ansicht</h3>
+        <p>Visuelles Kalendergitter Mo–Fr, 8–18 Uhr. Farbkodierte Einträge, parallele Events werden nebeneinander angezeigt.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🔍 Kurssuche &amp; Abonnement</h3>
+        <p>Kurspläne nach Semester (1–7) und Studiengang (z. B. MT, MS) suchen und direkt in den eigenen Kalender übernehmen.</p>
+      </div>
+      <div class="feature-card">
+        <h3>✏️ Eigene Einträge erstellen</h3>
+        <p>Persönliche Einträge mit Titel, Dozent, Raum, Uhrzeit, Notizen und Wiederholung (einmalig / wöchentlich / 2-wöchentlich).</p>
+      </div>
+      <div class="feature-card">
+        <h3>⚠️ Kollisionserkennung</h3>
+        <p>Beim Hinzufügen neuer Einträge wird automatisch geprüft, ob Zeitüberschneidungen mit bestehenden Einträgen vorliegen.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🔔 Push-Benachrichtigungen</h3>
+        <p>Erinnerungen für kommende Kurse. Zeitabstand einstellbar: 0, 5, 10, 15, 30 oder 60 Minuten vor Beginn.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📤 Kalender-Export</h3>
+        <p>Alle Einträge in die native Kalender-App des Geräts exportieren – mit vollständigen Wiederholungsregeln (iOS &amp; Android).</p>
+      </div>
+      <div class="feature-card">
+        <h3>⭐ Wichtige Einträge</h3>
+        <p>Einträge als "wichtig" markieren. Diese erscheinen gebündelt im eigenen "Wichtig"-Tab.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📢 Ankündigungen</h3>
+        <p>Admin-Ankündigungen werden im "Wichtig"-Tab angezeigt und sind für alle Studierenden sichtbar.</p>
+      </div>
+    </div>
+  </div>
+
+    <!-- Farbkodierung -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon">🎨</div>
+      Farblegende (Kalender)
+    </div>
+    <div class="color-legend">
+      <div class="color-dot"><div class="dot" style="background:#9FDBBD;"></div> Einmaliger Termin</div>
+      <div class="color-dot"><div class="dot" style="background:#9FBDDB;"></div> Wöchentlich</div>
+      <div class="color-dot"><div class="dot" style="background:#DDD4A8;"></div> 2-wöchentlich</div>
+      <div class="color-dot"><div class="dot" style="background:#f39325;"></div> Wichtig / Dringend</div>
+    </div>
+  </div>
+
+
+  <!-- Tab Navigation -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon">🗂</div>
+      App-Navigation (5 Tabs)
+    </div>
+    <div class="tab-grid">
+      <div class="tab-card">
+        <div class="tab-icon">🏠</div>
+        <h3>Home</h3>
+        <p>Alle heutigen Einträge, Suche erstellter Einträge, Bearbeiten/Löschen, Wichtig-Toggle, Farblegende</p>
+      </div>
+      <div class="tab-card">
+        <div class="tab-icon">📆</div>
+        <h3>Kalender</h3>
+        <p>Wochenraster mit Scroll-Navigation, Überlapp-Layout, Einträge bearbeiten</p>
+      </div>
+      <div class="tab-card">
+        <div class="tab-icon">➕</div>
+        <h3>Hinzufügen</h3>
+        <p>Einträge aus Kurssuche hinzufügen <em>oder</em> eigenen Eintrag erstellen, Kollisionserkennung bei überlappenden Einträgen</p>
+      </div>
+      <div class="tab-card">
+        <div class="tab-icon">⭐</div>
+        <h3>Wichtig</h3>
+        <p>Markierte Einträge &amp; Admin-Ankündigungen</p>
+      </div>
+      <div class="tab-card">
+        <div class="tab-icon">👤</div>
+        <h3>Profil</h3>
+        <p>Nutzerinfo, Passwort, Benachrichtigungen, Export, externe Links, Abmeldung</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin-Dashboard -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon">🔧</div>
+      Admin-Dashboard
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>📝 Kurs erstellen</h3>
+        <p>Neue Kurseinträge mit allen Feldern (Titel, Raum, Dozent, Zeit, Studiengang, Semester) anlegen.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📋 Kurse verwalten</h3>
+        <p>Alle Kurse einsehen, bearbeiten und löschen. Filterbar nach Semester und Studiengang.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📥 CSV-Massenimport</h3>
+        <p>Viele Kurseinträge auf einmal per CSV-Datei importieren.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📢 Ankündigungen senden</h3>
+        <p>System-Benachrichtigungen an alle Nutzer versenden, die im Wichtig-Tab erscheinen.</p>
+      </div>
+      <div class="feature-card">
+        <h3>👥 Nutzerverwaltung</h3>
+        <p>Alle registrierten Nutzer anzeigen, Daten bearbeiten (Name, E-Mail, Matrikelnummer), Passwort zurücksetzen, Nutzer löschen.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Externe Integrationen -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon">🔗</div>
+      Externe Integrationen &amp; Links
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>📲 Nativer Kalender (iOS/Android)</h3>
+        <p>Alle Einträge inkl. Wiederholungsregeln in die Geräte-Kalender-App exportieren (via Expo Calendar API).</p>
+      </div>
+      <div class="feature-card">
+        <h3>🏫 Raum Buchung</h3>
+        <p>Direktlink zum HAW-Raumbuchungssystem im Profil-Tab.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🍽 Mensa-Plan</h3>
+        <p>Direktlink zur STW Hamburg Mensa-Speisekarte im Profil-Tab.</p>
+      </div>
+      <div class="feature-card">
+        <h3>📧 Outlook</h3>
+        <p>Direktlink zu Outlook im Profil-Tab.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Endpoints -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon">🌐</div>
+      API-Endpunkte (Auswahl)
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Methode</th>
+          <th>Endpunkt</th>
+          <th>Beschreibung</th>
+          <th>Auth</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="method post">POST</span></td><td>/auth/register</td><td>Registrierung</td><td>–</td></tr>
+        <tr><td><span class="method post">POST</span></td><td>/auth/login</td><td>Anmeldung</td><td>–</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/auth/me</td><td>Aktuellen Nutzer abrufen</td><td>JWT</td></tr>
+        <tr><td><span class="method put">PUT</span></td><td>/auth/change-password</td><td>Passwort ändern</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/entries?userId=X</td><td>Eigene Einträge abrufen</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td>/entries</td><td>Eintrag erstellen</td><td>JWT</td></tr>
+        <tr><td><span class="method put">PUT</span></td><td>/entries/:id</td><td>Eintrag aktualisieren</td><td>JWT</td></tr>
+        <tr><td><span class="method patch">PATCH</span></td><td>/entries/:id/toggle-wichtig</td><td>Wichtig-Status umschalten</td><td>JWT</td></tr>
+        <tr><td><span class="method delete">DELETE</span></td><td>/entries/:id</td><td>Eintrag löschen</td><td>JWT</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/course-entries</td><td>Kurse suchen (öffentlich)</td><td>–</td></tr>
+        <tr><td><span class="method post">POST</span></td><td>/course-entries/bulk</td><td>CSV-Massenimport</td><td>Admin</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/announcements</td><td>Ankündigungen abrufen</td><td>JWT</td></tr>
+        <tr><td><span class="method post">POST</span></td><td>/announcements</td><td>Ankündigung versenden</td><td>Admin</td></tr>
+        <tr><td><span class="method get">GET</span></td><td>/admin/users</td><td>Alle Nutzer abrufen</td><td>Admin</td></tr>
+        <tr><td><span class="method delete">DELETE</span></td><td>/admin/users/:id</td><td>Nutzer löschen</td><td>Admin</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="section">
+    <div class="section-title">
+      <div class="icon">⚙️</div>
+      Technologies
+    </div>
+    <div style="margin-bottom:10px;">
+      <p style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;text-transform:uppercase;">Frontend</p>
+      <div class="tech-chips">
+        <span class="chip">React Native 0.81</span>
+        <span class="chip">Expo 54</span>
+        <span class="chip">TypeScript</span>
+        <span class="chip">Expo Router</span>
+        <span class="chip">Expo Calendar</span>
+        <span class="chip">Expo Notifications</span>
+        <span class="chip">Expo Secure Store</span>
+        <span class="chip">AsyncStorage</span>
+        <span class="chip">Reanimated</span>
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <p style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;text-transform:uppercase;">Backend</p>
+      <div class="tech-chips">
+        <span class="chip backend">Node.js</span>
+        <span class="chip backend">Express.js 5</span>
+        <span class="chip backend">JWT</span>
+        <span class="chip backend">bcryptjs</span>
+        <span class="chip backend">dotenv</span>
+      </div>
+    </div>
+    <div>
+      <p style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;text-transform:uppercase;">Datenbank</p>
+      <div class="tech-chips">
+        <span class="chip db">MongoDB</span>
+        <span class="chip db">Mongoose ODM</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>HAW Kalender · <a href="https://github.com/marcushsv/hawgooglecalendar.git" style="color:#002E99;text-decoration:none;">github.com/marcushsv/hawgooglecalendar</a></span>
+    <span>Stand: März 2026</span>
+  </div>
+
+</div>
+</body>
+</html>
